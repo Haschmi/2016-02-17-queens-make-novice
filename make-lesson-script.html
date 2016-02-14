@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <title>Software Carpentry: Make</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap-theme.css" />
+    <link rel="stylesheet" type="text/css" href="css/swc.css" />
+    <link rel="alternate" type="application/rss+xml" title="Software Carpentry Blog" href="http://software-carpentry.org/feed.xml"/>
+    <meta charset="UTF-8" />
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body class="lesson">
+    <div class="container card">
+      <div class="banner">
+        <a href="http://software-carpentry.org" title="Software Carpentry">
+          <img alt="Software Carpentry banner" src="img/software-carpentry-banner.png" />
+        </a>
+      </div>
+      <article>
+      <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+                    <a href="index.html"><h1 class="title">Make</h1></a>
+          <h2 class="subtitle">Lesson script</h2>
+          <h1 id="make">Make</h1>
+<p>One of the things you might find while programming is that you end up making a whole bunch of scripts to a whole bunch of little jobs. How do you tie them together to make a workflow?</p>
+<p><code>make</code> helps solve this- it’s an automation tool that ties things together.</p>
+<p>A couple common uses: + Automating a workflow + Compiling code + Combine scripts and figures to create papers</p>
+<p>You’re not required to use it or anything, like Git, this is a tool that you can use when you think it might be useful.</p>
+<h2 id="introduction">Introduction</h2>
+<p>This folder is what we’ll be working with for this tutorial. It contains a couple complete books (in the books/ directory) and several Python scripts to generate statistics based on the contents of the books.</p>
+<blockquote>
+<p>Make sure students are using the anaconda3 usepackage</p>
+</blockquote>
+<ul>
+<li>Take a look at the contents of the books</li>
+<li><code>python wordcount.py books/isles.txt isles.dat</code></li>
+<li><code>python plotcount.py isles.dat show</code></li>
+<li><code>python plotcount.py isles.dat isles.jpg</code></li>
+</ul>
+<p>We’re going to try using make to automate this process and pack up the results nicely for us</p>
+<h2 id="makefile-basics">Makefile basics</h2>
+<p>Start editing Makefile, explain what targets/dependencies are, the tabbed commands are just shell commands.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="co"># Count words</span>
+<span class="kw">isles.dat</span> : books/isles.txt
+        <span class="kw">python</span> wordcount.py books/isles.txt isles.dat</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> isles.dat
+<span class="kw">ls</span></code></pre>
+<p>Make sure people are using tabs instead of spaces</p>
+<p>Try running <code>make isles.dat</code> again, does it do anything?</p>
+<p>How does make know when stuff is up-to-date? It actually checks the time each file was last modified- if the dependencies are more recent than the target, it remakes the target.</p>
+<pre><code>touch books/isles.txt
+# ls -l both files
+make isles.dat</code></pre>
+<p>Add a second rule</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">abyss.dat</span> : books/abyss.txt
+        <span class="kw">python</span> wordcount.py books/abyss.txt abyss.dat</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> abyss.dat
+<span class="kw">ls</span></code></pre>
+<p>What if we want to clean up after ourselves? Let’s create a target called “clean” that will clean up all the files we make…</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">clean</span> :
+    <span class="kw">rm</span> -f *.dat</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean</code></pre>
+<p>What happens if we make a file called clean?</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">touch</span> clean
+<span class="kw">make</span> clean</code></pre>
+<p><code>make</code> thinks that “clean” makes a file called <code>clean</code>. How can we tell it that “clean” doesn’t actually make anything?</p>
+<p>At the top of our Makefile (or anywhere) we tell <code>make</code> that “clean” is a phony target.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : clean</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">ls</span></code></pre>
+<p>Typing <code>make isles.dat</code> then <code>make abyss.dat</code> seems inefficient. Let’s create another target that makes both of them.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : clean dats
+<span class="kw">dats</span> : abyss.dat isles.dat</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> dats</code></pre>
+<p>Student’s Makefiles should look like this:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : clean dats
+
+<span class="kw">dats</span> : isles.dat abyss.dat
+
+<span class="kw">isles.dat</span> : books/isles.txt
+        <span class="kw">python</span> wordcount.py books/isles.txt isles.dat
+
+<span class="kw">abyss.dat</span> : books/abyss.txt
+        <span class="kw">python</span> wordcount.py books/abyss.txt abyss.dat
+
+<span class="kw">clean</span> :
+        <span class="kw">rm</span> -f *.dat</code></pre>
+<section class="challenge panel panel-success">
+<div class="panel-heading">
+<h3 id="writing-custom-rules"><span class="glyphicon glyphicon-pencil"></span>Writing custom rules</h3>
+</div>
+<div class="panel-body">
+<p>Write some more rules:</p>
+<ul>
+<li><p>Write a new rule for last.dat, created from books/last.txt.</p></li>
+<li><p>Update the dats rule with this target.</p></li>
+<li>Write a new rule for analysis.tar.gz, which creates an archive of the data files. The rule needs to:</li>
+<li>Depend upon each of the three .dat files.</li>
+<li><p>Invoke the action tar -czf analysis.tar.gz isles.dat abyss.dat last.dat</p></li>
+<li><p>Update clean to remove analysis.tar.gz.</p></li>
+</ul>
+</div>
+</section>
+<h2 id="automatic-variables">Automatic variables</h2>
+<p>Student’s stuff should now look like this:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : clean dats
+
+<span class="kw">dats</span> : isles.dat abyss.dat last.dat
+
+<span class="kw">isles.dat</span> : books/isles.txt
+    <span class="kw">python</span> wordcount.py books/isles.txt isles.dat
+
+<span class="kw">abyss.dat</span> : books/abyss.txt
+    <span class="kw">python</span> wordcount.py books/abyss.txt abyss.dat
+
+<span class="kw">last.dat</span> : books/last.txt
+    <span class="kw">python</span> wordcount.py books/last.txt last.dat
+
+<span class="kw">analysis.tar.gz</span> : isles.dat abyss.dat last.dat
+    <span class="kw">tar</span> -czf analysis.tar.gz isles.dat abyss.dat last.dat
+
+<span class="kw">clean</span> :
+        <span class="kw">rm</span> -f *.dat</code></pre>
+<p>We’ve been duplicating a lot of code and typing the same words twice. Let’s try and avoid this.</p>
+<ul>
+<li>We can refer to a target with <code>$@</code></li>
+<li><code>$^</code> means “all dependencies”</li>
+</ul>
+<p>Rewrite the analysis.tar.gz part</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">analysis.tar.gz</span> : isles.dat abyss.dat last.dat
+        <span class="kw">tar</span> -czf <span class="ot">$@</span> $^</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">make</span> analysis.tar.gz</code></pre>
+<p>We can even use bash wildcards in our dependency list:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">analysis.tar.gz</span> : *.dat
+        <span class="kw">tar</span> -czf <span class="ot">$@</span> $^</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">touch</span> books/*.txt
+<span class="kw">make</span> analysis.tar.gz</code></pre>
+<p>But there’s a problem: notice how this <em>doesn’t</em> work:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">make</span> analysis.tar.gz</code></pre>
+<p>If you use wildcards and there aren’t any of the file type specified, <strong>make won’t like it</strong>. Let’s change things back.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">analysis.tar.gz</span> : isles.dat abyss.dat last.dat
+        <span class="kw">tar</span> -czf <span class="ot">$@</span> $^</code></pre>
+<section class="challenge panel panel-success">
+<div class="panel-heading">
+<h3 id="the-variable"><span class="glyphicon glyphicon-pencil"></span>The <code>$&lt;</code> variable</h3>
+</div>
+<div class="panel-body">
+<p>Whereas <code>$^</code> means all dependencies <code>$&lt;</code> simply means the first dependency.</p>
+<p>Rewrite all of our .dat rules to use <code>$@</code> and <code>$&lt;</code></p>
+</div>
+</section>
+<p>Our .dat rules actually depend on two things: the actual book files as well as the <code>wordcount.py</code> script used to create them.</p>
+<p>Add <code>wordcount.py</code> as a dependency to all of the .dat rules</p>
+<p>Also, I’m feeling really lazy. What happens if we simply type <code>make</code> with no arguments?</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">make</span></code></pre>
+<p>When make is run with no arguments it makes the first rule that doesn’t begin with a <code>.</code> (so the <code>.PHONY</code> stuff doesn’t count). If we want to make a default rule, the convention is to call it <code>all</code>.</p>
+<p>Let’s make a phony target called <code>all</code> that depends on analysis.tar.gz.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : clean dats all
+
+<span class="kw">all</span> : analysis.tar.gz</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">make</span></code></pre>
+<h2 id="pattern-rules">Pattern rules</h2>
+<p>We’ve still got a ton of redundancy. Why do we have three rules that pretty much all do the same thing? Is there a way of using wildcards in a non-buggy way in <code>make</code>.</p>
+<p><code>%</code> functions as <code>make</code>’s wildcard. Let’s rewrite the .dat rules to be non-redundant.</p>
+<p>Another special variable: <code>$*</code>. <code>$*</code> is a filename minus its extension. There’s no real difference between it and <code>$*.dat</code> and <code>$@</code> in this scenario (just teaching something extra!).</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">%.dat</span> : books/%.txt wordcount.py
+    <span class="kw">python</span> wordcount.py $<span class="kw">&lt;</span> <span class="ot">$*</span></code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">make</span></code></pre>
+<h2 id="variables-and-functions">Variables and functions</h2>
+<p>Our Makefile should now look like this:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : all clean
+
+<span class="kw">all</span> : analysis.tar.gz
+
+<span class="kw">%.dat</span> : books/%.txt wordcount.py
+    <span class="kw">python</span> wordcount.py $<span class="kw">&lt;</span> <span class="ot">$@</span>
+
+<span class="kw">analysis.tar.gz</span> : isles.dat abyss.dat last.dat
+    <span class="kw">tar</span> -czf <span class="ot">$@</span> $^
+
+<span class="kw">clean</span> :
+    <span class="kw">rm</span> -f *.dat
+    <span class="kw">rm</span> -f analysis.tar.gz</code></pre>
+<p>For maximum laziness, let’s see if we can write down all of our intended targets in a variable.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="ot">DATS=</span>isles.dat <span class="kw">abyss.dat</span> last.dat
+
+<span class="kw">analysis.tar.gz</span> : <span class="ot">$(</span><span class="kw">DATS</span><span class="ot">)</span>
+    <span class="kw">tar</span> -czf <span class="ot">$@</span> $^</code></pre>
+<p>But my fingers are getting tired! Isn’t there any way we can figure out the names of the .dat files automatically? We can use some functions to do this:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="ot">TXTS=$(</span><span class="kw">wildcard</span> books/*.txt<span class="ot">)</span>
+<span class="ot">DATS=$(</span><span class="kw">patsubst</span> books/%.txt, %.dat, <span class="ot">$(</span><span class="kw">TXTS</span><span class="ot">))</span>
+
+<span class="kw">analysis.tar.gz</span> : <span class="ot">$(</span><span class="kw">DATS</span><span class="ot">)</span>
+    <span class="kw">tar</span> -czf <span class="ot">$@</span> $^</code></pre>
+<section class="challenge panel panel-success">
+<div class="panel-heading">
+<h3 id="putting-it-all-together"><span class="glyphicon glyphicon-pencil"></span>Putting it all together</h3>
+</div>
+<div class="panel-body">
+<p>Edit your Makefile so that:<br />+ You create a variable called JPGS that contains the name of every .jpg file you’ll make + You make a .jpg for every .dat file + The .jpgs are put into the analysis.tar.gz file + The .jpgs get cleaned up when you use <code>make clean</code></p>
+</div>
+</section>
+<h2 id="final-notes">Final notes</h2>
+<p>Answer from last question:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"></code></pre>
+<p><code>make</code> has a habit of cleaning up files when it’s done sometimes. Let’s demonstrate this.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">all</span> : <span class="ot">$(</span><span class="kw">JPGS</span><span class="ot">)</span></code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
+<span class="kw">make</span></code></pre>
+<p>Sometimes those intermediate files took hours to make and we don’t want to lose them! We can avoid this by adding <code>.SECONDARY :</code> to our Makefile!</p>
+<p>Our final Makefile:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : all clean
+<span class="kw">.SECONDARY</span> :
+
+<span class="ot">TXTS=$(</span><span class="kw">wildcard</span> books/*.txt<span class="ot">)</span>
+<span class="ot">DATS=$(</span><span class="kw">patsubst</span> books/%.txt, %.dat, <span class="ot">$(</span><span class="kw">TXTS</span><span class="ot">))</span>
+<span class="ot">JPGS=$(</span><span class="kw">patsubst</span> %.dat, %.jpg, <span class="ot">$(</span><span class="kw">DATS</span><span class="ot">))</span>
+
+<span class="kw">all</span> : analysis.tar.gz
+
+<span class="kw">%.dat</span> : books/%.txt wordcount.py
+    <span class="kw">python</span> wordcount.py $<span class="kw">&lt;</span> <span class="ot">$@</span>
+
+<span class="kw">%.jpg</span> : %.dat plotcount.py
+    <span class="kw">python</span> plotcount.py $<span class="kw">&lt;</span> <span class="ot">$@</span>
+
+<span class="kw">analysis.tar.gz</span> : <span class="ot">$(</span><span class="kw">DATS</span><span class="ot">)</span> <span class="ot">$(</span><span class="kw">JPGS</span><span class="ot">)</span>
+    <span class="kw">tar</span> -czf <span class="ot">$@</span> $^
+
+<span class="kw">clean</span> :
+    <span class="kw">rm</span> -f *.dat *.jpg analysis.tar.gz</code></pre>
+<section class="challenge panel panel-success">
+<div class="panel-heading">
+<h2 id="interpreting-other-peoples-makefiles"><span class="glyphicon glyphicon-pencil"></span>Interpreting other peoples’ Makefiles</h2>
+</div>
+<div class="panel-body">
+<p>See if you can understand the following Makefile:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="ot">CC=</span>gcc
+<span class="ot">CFLAGS=</span>-g <span class="kw">-Wall</span> -O2 -Wno-unused-function
+
+<span class="kw">all</span>:seqtk trimadap
+
+<span class="kw">seqtk</span>:seqtk.c khash.h kseq.h
+      <span class="ot">$(</span><span class="kw">CC</span><span class="ot">)</span> <span class="ot">$(</span><span class="kw">CFLAGS</span><span class="ot">)</span> <span class="kw">seqtk.c</span> -o <span class="ot">$@</span> -lz -lm
+
+<span class="kw">trimadap</span>:trimadap.c kseq.h ksw.h
+      <span class="ot">$(</span><span class="kw">CC</span><span class="ot">)</span> <span class="ot">$(</span><span class="kw">CFLAGS</span><span class="ot">)</span> <span class="kw">ksw.c</span> trimadap.c -o <span class="ot">$@</span> -lz -lm
+
+<span class="kw">clean</span>:
+      <span class="kw">rm</span> -fr gmon.out *.o ext/*.o a.out seqtk trimadap *~ *.a *.dSYM session*</code></pre>
+</div>
+</section>
+        </div>
+      </div>
+      </article>
+      <div class="footer">
+        <a class="label swc-blue-bg" href="http://software-carpentry.org">Software Carpentry</a>
+        <a class="label swc-blue-bg" href="https://github.com/swcarpentry/lesson-template">Source</a>
+        <a class="label swc-blue-bg" href="mailto:admin@software-carpentry.org">Contact</a>
+        <a class="label swc-blue-bg" href="LICENSE.html">License</a>
+      </div>
+    </div>
+    <!-- Javascript placed at the end of the document so the pages load faster -->
+    <script src="http://software-carpentry.org/v5/js/jquery-1.9.1.min.js"></script>
+    <script src="css/bootstrap/bootstrap-js/bootstrap.js"></script>
+  </body>
+</html>
