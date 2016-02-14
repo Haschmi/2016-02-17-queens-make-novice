@@ -11,7 +11,8 @@ One of the things you might find while programming is that you end up making a w
 
 `make` helps solve this- it's an automation tool that ties things together.
 
-A couple common uses:
+A couple common uses:  
+
 + Automating a workflow
 + Compiling code
 + Combine scripts and figures to create papers
@@ -296,7 +297,25 @@ analysis.tar.gz : $(DATS)
 Answer from last question:
 
 ```{.bash}
+.PHONY : all clean
 
+TXTS=$(wildcard books/*.txt)
+DATS=$(patsubst books/%.txt, %.dat, $(TXTS))
+JPGS=$(patsubst %.dat, %.jpg, $(DATS))
+
+all : analysis.tar.gz
+
+%.dat : books/%.txt wordcount.py
+	python wordcount.py $< $@
+
+%.jpg : %.dat plotcount.py
+	python plotcount.py $< $@
+
+analysis.tar.gz : $(DATS) $(JPGS)
+	tar -czf $@ $^
+
+clean :
+	rm -f *.dat *.jpg analysis.tar.gz
 ```
 
 `make` has a habit of cleaning up files when it's done sometimes. Let's demonstrate this.

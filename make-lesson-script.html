@@ -31,7 +31,12 @@
           <h1 id="make">Make</h1>
 <p>One of the things you might find while programming is that you end up making a whole bunch of scripts to a whole bunch of little jobs. How do you tie them together to make a workflow?</p>
 <p><code>make</code> helps solve this- it’s an automation tool that ties things together.</p>
-<p>A couple common uses: + Automating a workflow + Compiling code + Combine scripts and figures to create papers</p>
+<p>A couple common uses:</p>
+<ul>
+<li>Automating a workflow</li>
+<li>Compiling code</li>
+<li>Combine scripts and figures to create papers</li>
+</ul>
 <p>You’re not required to use it or anything, like Git, this is a tool that you can use when you think it might be useful.</p>
 <h2 id="introduction">Introduction</h2>
 <p>This folder is what we’ll be working with for this tutorial. It contains a couple complete books (in the books/ directory) and several Python scripts to generate statistics based on the contents of the books.</p>
@@ -214,7 +219,25 @@ make isles.dat</code></pre>
 </section>
 <h2 id="final-notes">Final notes</h2>
 <p>Answer from last question:</p>
-<pre class="sourceCode bash"><code class="sourceCode bash"></code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">.PHONY</span> : all clean
+
+<span class="ot">TXTS=$(</span><span class="kw">wildcard</span> books/*.txt<span class="ot">)</span>
+<span class="ot">DATS=$(</span><span class="kw">patsubst</span> books/%.txt, %.dat, <span class="ot">$(</span><span class="kw">TXTS</span><span class="ot">))</span>
+<span class="ot">JPGS=$(</span><span class="kw">patsubst</span> %.dat, %.jpg, <span class="ot">$(</span><span class="kw">DATS</span><span class="ot">))</span>
+
+<span class="kw">all</span> : analysis.tar.gz
+
+<span class="kw">%.dat</span> : books/%.txt wordcount.py
+    <span class="kw">python</span> wordcount.py $<span class="kw">&lt;</span> <span class="ot">$@</span>
+
+<span class="kw">%.jpg</span> : %.dat plotcount.py
+    <span class="kw">python</span> plotcount.py $<span class="kw">&lt;</span> <span class="ot">$@</span>
+
+<span class="kw">analysis.tar.gz</span> : <span class="ot">$(</span><span class="kw">DATS</span><span class="ot">)</span> <span class="ot">$(</span><span class="kw">JPGS</span><span class="ot">)</span>
+    <span class="kw">tar</span> -czf <span class="ot">$@</span> $^
+
+<span class="kw">clean</span> :
+    <span class="kw">rm</span> -f *.dat *.jpg analysis.tar.gz</code></pre>
 <p><code>make</code> has a habit of cleaning up files when it’s done sometimes. Let’s demonstrate this.</p>
 <pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">all</span> : <span class="ot">$(</span><span class="kw">JPGS</span><span class="ot">)</span></code></pre>
 <pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> clean
